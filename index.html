@@ -14,10 +14,12 @@
 	.TrafficCard { width: calc(608px / 2); height: calc(471px / 2); background-image: url('img/TrafficCard.png'); }
 	.WhiteLogo { width: calc(285px / 2); height: calc(93px / 2); background-image: url('img/WhiteLogo.png'); }
 
+	.Background { width: 100%; height: 100%; }
+
 	html, body, #app-container { height: 100%; }
 	.phone-mask { width: 320px; height: 480px; position: absolute; left: 0; top: 0; right: 0; bottom: 0; position: absolute; margin: auto; background: #ccc; }
 
-	.layer { -webkit-transition: all 2s ease; }
+	.layer { -webkit-transition: all .5s ease; }
 
 	/*.ColorLogo { -webkit-transform: translate3d(61.5px, 100px, 0); }*/
 	/*.Searchbox { -webkit-transform: translate3d(14px, 200px, 0); }*/
@@ -42,6 +44,16 @@
 	<script src="lodash.js"></script>
 	<script>
 
+	var TransitionGroup = React.addons.TransitionGroup;
+
+	var app;
+
+	var changeLayout = function(layout) {
+		app.setState({
+			layout: layout
+		});
+	};
+
 	var cycle = function() {
 		var args, curr;
 		if (_.isArray(arguments[0])) {
@@ -63,8 +75,12 @@
 	 * Default properties for all imported layers
 	 */
 	var layers = {
+		Background: {},
 		ColorLogo: {
-			attr: { x: 61.5, y: 100 }
+			attr: { x: 61.5, y: 100 },
+			closed: { attr: { opacity: 0 } },
+			opening: { attr: { opacity: 1 } },
+			closing: { attr: { opacity: 0 } }
 		},
 		Searchbox: {
 			attr: { x: 14, y: 200 }
@@ -76,60 +92,153 @@
 	 */
 	var layouts = {
 		defaultView: {
-			ColorLogo: {},
-			Searchbox: {}
+			Background: {
+				onClick: function() {
+					changeLayout('standardView')
+				}
+			}
+		},
+		standardView: {
+			Background: {
+				childLayers: {
+					ColorLogo: {
+						onClick: function(event) {
+							changeLayout('nowView');
+						}
+					},
+					Searchbox: {
+						onClick: function(event) {
+							changeLayout('searchView');
+						}
+					}
+				}
+			}
 		},
 		nowView: {
-			ColorLogo: {
-				attr: { scale: 0.5, y: 50 }
-			},
-			Searchbox: {
-				attr: { y: 100 }
+			Background: {
+				onClick: function() {
+					changeLayout('standardView');
+				},
+				childLayers: {
+					ColorLogo: {
+						attr: { scale: 0.5, y: 50 }
+					},
+					Searchbox: {
+						attr: { y: 100 }
+					}
+				}
 			}
 		},
 		searchView: {
-			Searchbox: {}
+			Background: {
+				onClick: function() {
+					changeLayout('standardView');
+				},
+				childLayers: {
+					Searchbox: {}
+				}
+			}
 		}
 	};
+
 
 	/**
 	 * 'React Framer'!
 	 */
 
 	var createLayer = function(layer, key) {
-		key = layer.key || key;
-		return Layer(_.extend({}, layer, {
-			key: layer.key || key,
-			name: key,
-			layers: this.props.layers,
-			layouts: this.props.layouts
-		}));
+		return (
+			Layer(_.extend({}, layer, {
+				name: key,
+				key: layer.key || key,
+				layers: this.props.layers,
+				layouts: this.props.layouts
+			}))
+		);
 	};
 
+	var LayerTransition = React.createClass({
+		render: function() {
+			return React.DOM.div({
+				className: 'layer-transition'
+			}, this.props.children);
+		}
+	});
+
+	var specialProps = ['scale', 'x', 'y'];
+
 	var Layer = React.createClass({
+		getInitialState: function() {
+			return {
+				attr: {},
+				curtain: 'closed'
+			};
+		},
 		defaultStyleProps: {
 			x: 0,
 			y: 0
 		},
+		getAttr: function(key) {
+			var attr = this.props[key] ? this.props[key].attr : null;
+			if(!attr) attr = this.props.layers[this.props.name][key] ? this.props.layers[this.props.name][key].attr : null;
+			return attr;
+		},
+		componentWillLeave: function(leave) {
+			this.setState({
+				curtain: 'closing'
+			}, function() {
+				setTimeout(function() {
+					leave();
+				}, 500);
+			});
+		},
+		componentWillEnter: function(enter) {
+			setTimeout(function() {
+				this.setState({
+					curtain: 'opening'
+				}, function() {
+					enter();
+				});
+			}.bind(this), 0);
+		},
 		render: function() {
 			var defaultStylePropsForLayer = this.props.layers[this.props.name].attr;
 			var stylePropsForLayout = this.props.attr;
-			var props = _.extend({}, this.defaultStyleProps, defaultStylePropsForLayer, stylePropsForLayout);
+			var stylePropsForCurtain = this.getAttr(this.state.curtain);
+
+			var props = _.extend({}, this.defaultStyleProps, stylePropsForCurtain, defaultStylePropsForLayer, stylePropsForLayout);
 
 			var translate = 'translate3d(' + props.x + 'px, ' + props.y + 'px, 0px)';
 			var scale = 'scale(' + (typeof props.scale !== 'undefined' ? props.scale : 1) + ')';
 
-			var children = (this.props.childLayers && this.props.childLayers.map(function(child, key) {
+			var children = (this.props.childLayers && _.map(this.props.childLayers, function(child, key) {
 				return createLayer.call(this, child, key);
 			}.bind(this))) || [];
 
+			var style = {};
+			for(var key in props) {
+				if(specialProps.indexOf(key) === -1) {
+					style[key] = props[key];
+				}
+			}
+
 			return (
-				this.transferPropsTo(React.DOM.div({
-					className: this.props.name + ' layer',
-					style: {
-						WebkitTransform: [translate, scale].join(' ')
-					}
-				}))
+				this.transferPropsTo(
+					React.DOM.div(
+						{
+							className: this.props.name + ' layer',
+							style: _.extend({
+								WebkitTransform: [translate, scale].join(' '),
+							}, style)
+						},
+						TransitionGroup(
+							{
+								component: React.DOM.div
+							},
+							children
+						)
+					)
+				)
 			);
 		}
 	});
@@ -147,23 +256,27 @@
 			};
 		},
 		componentWillMount: function() {
-			this.cycle = cycle('defaultView', 'nowView', 'searchView');
-			this.cycle();
+			// this.cycle = cycle('standardView', 'nowView', 'searchView');
 		},
 		render: function() {
 			return React.DOM.div({
 				className: 'phone-mask',
 				onClick: this._onClick
 			},
-				_.map(this.props.layouts[this.state.layout], function(layer, key) {
-					return createLayer.call(this, layer, key);
-				}.bind(this))
+				TransitionGroup(
+					{
+						component: React.DOM.div
+					},
+					_.map(this.props.layouts[this.state.layout], function(layer, key) {
+						return createLayer.call(this, layer, key);
+					}.bind(this))
+				)
 			);
 		},
 		_onClick: function(event) {
-			this.setState({
-				layout: this.cycle()
-			});
+			// this.setState({
+				// layout: this.cycle()
+			// });
 		}
 	});
 
@@ -171,7 +284,7 @@
 	 * Instantiate
 	 */
 
-	React.renderComponent(App({
+	app = React.renderComponent(App({
 		layers: layers,
 		layouts: layouts
 	}), document.getElementById('app-container'));
