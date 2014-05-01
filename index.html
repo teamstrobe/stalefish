@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>React Framer</title>
+	<style>
+	* { margin: 0; padding: 0; }
+	.layer { background: none no-repeat 0 0; background-size: 100% auto; position: absolute; top: 0; left: 0; -webkit-transform: translate3d(0,0,0); }
+	
+	/* These would be built dynamically */
+	.ColorLogo { width: 197px; height: 67px; background-image: url('img/ColorLogo.png'); }
+	.Context { width: 320px; height: 180px; background-image: url('img/Context.png'); }
+	.Searchbox { width: calc(584px / 2); height: calc(116px / 2); background-image: url('img/Searchbox.png'); }
+	.TrafficCard { width: calc(608px / 2); height: calc(471px / 2); background-image: url('img/TrafficCard.png'); }
+	.WhiteLogo { width: calc(285px / 2); height: calc(93px / 2); background-image: url('img/WhiteLogo.png'); }
+
+	html, body, #app-container { height: 100%; }
+	.phone-mask { width: 320px; height: 480px; position: absolute; left: 0; top: 0; right: 0; bottom: 0; position: absolute; margin: auto; background: #ccc; }
+
+	.layer { -webkit-transition: all 2s ease; }
+
+	/*.ColorLogo { -webkit-transform: translate3d(61.5px, 100px, 0); }*/
+	/*.Searchbox { -webkit-transform: translate3d(14px, 200px, 0); }*/
+
+	</style>
+</head>
+<body>
+
+	<div id="app-container"></div>
+
+	<!-- <div class="phone-mask"> -->
+
+		<!-- <div class="ColorLogo layer"></div> -->
+		<!-- <div class="Context layer"></div> -->
+		<!-- <div class="Searchbox layer"></div> -->
+		<!-- <div class="TrafficCard layer"></div> -->
+		<!-- <div class="WhiteLogo layer"></div> -->
+
+	<!-- </div> -->
+
+	<script src="react.js"></script>
+	<script src="lodash.js"></script>
+	<script>
+
+	var cycle = function() {
+		var args, curr;
+		if (_.isArray(arguments[0])) {
+			args = arguments[0];
+		} else {
+			args = Array.prototype.slice.call(arguments);
+		}
+		curr = -1;
+		return function() {
+			curr++;
+			if (curr >= args.length) {
+				curr = 0;
+			}
+			return args[curr];
+		};
+	};
+
+	/**
+	 * Default properties for all imported layers
+	 */
+	var layers = {
+		ColorLogo: {
+			attr: { x: 61.5, y: 100 }
+		},
+		Searchbox: {
+			attr: { x: 14, y: 200 }
+		}
+	};
+
+	/**
+	 * Property composites for combination of 
+	 */
+	var layouts = {
+		defaultView: {
+			ColorLogo: {},
+			Searchbox: {}
+		},
+		nowView: {
+			ColorLogo: {
+				attr: { scale: 0.5, y: 50 }
+			},
+			Searchbox: {
+				attr: { y: 100 }
+			}
+		},
+		searchView: {
+			Searchbox: {}
+		}
+	};
+
+	/**
+	 * 'React Framer'!
+	 */
+
+	var createLayer = function(layer, key) {
+		key = layer.key || key;
+		return Layer(_.extend({}, layer, {
+			key: layer.key || key,
+			name: key,
+			layers: this.props.layers,
+			layouts: this.props.layouts
+		}));
+	};
+
+	var Layer = React.createClass({
+		defaultStyleProps: {
+			x: 0,
+			y: 0
+		},
+		render: function() {
+			var defaultStylePropsForLayer = this.props.layers[this.props.name].attr;
+			var stylePropsForLayout = this.props.attr;
+			var props = _.extend({}, this.defaultStyleProps, defaultStylePropsForLayer, stylePropsForLayout);
+
+			var translate = 'translate3d(' + props.x + 'px, ' + props.y + 'px, 0px)';
+			var scale = 'scale(' + (typeof props.scale !== 'undefined' ? props.scale : 1) + ')';
+
+			var children = (this.props.childLayers && this.props.childLayers.map(function(child, key) {
+				return createLayer.call(this, child, key);
+			}.bind(this))) || [];
+
+			return (
+				this.transferPropsTo(React.DOM.div({
+					className: this.props.name + ' layer',
+					style: {
+						WebkitTransform: [translate, scale].join(' ')
+					}
+				}))
+			);
+		}
+	});
+
+	var App = React.createClass({
+		getDefaultProps: function() {
+			return {
+				layouts: [],
+				layers: []
+			};
+		},
+		getInitialState: function() {
+			return {
+				layout: 'defaultView'
+			};
+		},
+		componentWillMount: function() {
+			this.cycle = cycle('defaultView', 'nowView', 'searchView');
+			this.cycle();
+		},
+		render: function() {
+			return React.DOM.div({
+				className: 'phone-mask',
+				onClick: this._onClick
+			},
+				_.map(this.props.layouts[this.state.layout], function(layer, key) {
+					return createLayer.call(this, layer, key);
+				}.bind(this))
+			);
+		},
+		_onClick: function(event) {
+			this.setState({
+				layout: this.cycle()
+			});
+		}
+	});
+
+	/**
+	 * Instantiate
+	 */
+
+	React.renderComponent(App({
+		layers: layers,
+		layouts: layouts
+	}), document.getElementById('app-container'));
+
+	</script>
+	
+</body>
+</html>
