@@ -10,6 +10,8 @@
 + State machine for different layouts
 + Opening/closing attributes on layers
 
+---
+
 ## Documentation
 
 ### Prerequisites
@@ -22,6 +24,7 @@
 ### Initialising
 
 **Create a new instance** of Stalefish first, so that you have access to the instance when initialising the app
+
 `var stalefish = new Stalefish()`
 
 **Initialise the app**. The following parameters are required...
@@ -48,20 +51,20 @@ stalefish.init({
 })
 ```
 
-... see *Changing the current layout* below how to actually switch from `defaultView` to `myOtherView`...
+... see **"Changing the current layout"** below how to actually switch from `defaultView` to `myOtherView`...
 
 ### Layers
 
 There's plenty of things you can pass into layers config objects.
 
-###### Style Attributes
+##### Style Attributes
 
 Style attributes are defined through the `attr` key in a layer config object.
 
 + **Special style attributes**: `scale`, `x`, and `y` all render using `WebkitTransform`. 
-+ All other properties that are used in React are also supported, e.g. `opacity`
++ **All other style attributes** that are used in React are also supported, e.g. `opacity`
 
-###### Opening / closing attributes
+##### Opening / closing attributes
 
 You can override style attributes for when the layer is appearing or disappearing from the DOM.
 
@@ -108,7 +111,7 @@ layouts: {
 
 ### Layouts
 
-###### Layout overrides
+##### Layout overrides
 
 You can override properties of a layout, by simply defining a new object. It will automatically inherit from the layer of the same name.
 
@@ -126,7 +129,7 @@ layouts: {
 }
 ```
 
-###### Changing the current layout
+##### Changing the current layout
 
 Your stalefish app instance has a method called `changeLayout` to switch the layout state to something else.
 You can utilise this in your configuration block, e.g.
@@ -140,7 +143,8 @@ You can utilise this in your configuration block, e.g.
 			}
 		}
 	}
-}```
+}
+```
 
 ### Mixin trick
 
@@ -173,22 +177,26 @@ var blueBgMixin = { attr: { background: 'blue' } };
 2. Add stalefish to your project root — `npm install git+ssh://git@github.com/joecritch/stalefish.git`
 3. Point a script tag to `dist/stalefish.js`, or utilise it as an npm module
 
-## Roadmap!
+---
+
+## Other shiz
+
+######Roadmap!
 
 + Cover all CSS styles (e.g. rotate, 3d)
 + Sketch / Photoshop integration?
 + Reactive animations?
 
-## Inspired by...
+###### Inspired by...
 
 + Framer.js
 + Both my react-layout and framer-director projects
 
-## Practically impossible without...
+###### Practically impossible without...
 
 + React.js <3
 
-## Stalefish??
+###### Stalefish??
 
 I dunno! I just looked up some Tony Hawk's Pro Skater tricks.
 
