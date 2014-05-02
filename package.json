@@ -10,7 +10,7 @@
     "watchify": "^0.8.2"
   },
   "scripts": {
-    "watch": "browserify src/stalefish.js > dist/stalefish.js",
+    "build": "browserify src/stalefish.js > dist/stalefish.js",
     "watch-example": "watchify examples/first-example/app.js -o examples/first-example/build.js -d -v"
   }
 }

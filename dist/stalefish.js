@@ -25855,6 +25855,8 @@ var React = require('react/addons');
 var TransitionGroup = React.addons.TransitionGroup;
 var _ = require('lodash');
 
+React.initializeTouchEvents(true);
+
 var Stalefish = function() {
 	
 };
@@ -25892,18 +25894,25 @@ Stalefish.prototype.changeLayout = function(layout) {
 };
 
 Stalefish.prototype.createLayer = function(layer, key, parent, firstLayout, layoutName) {
+
+	var props = _.extend({}, parent.props.layers[key], layer, {
+		name: key,
+		key: layer.key || key,
+		layers: parent.props.layers,
+		layouts: parent.props.layouts,
+		specialProps: this.specialProps,
+		layerClass: this.opts.layerClass,
+		stalefish: this,
+		layout: layoutName,
+		firstLayout: firstLayout
+	});
+
+	if('ontouchstart' in document.documentElement) {
+		props.onTouchStart = props.onClick;
+	}
+
 	return (
-		Layer(_.extend({}, parent.props.layers[key], layer, {
-			name: key,
-			key: layer.key || key,
-			layers: parent.props.layers,
-			layouts: parent.props.layouts,
-			specialProps: this.specialProps,
-			layerClass: this.opts.layerClass,
-			stalefish: this,
-			layout: layoutName,
-			firstLayout: firstLayout
-		}))
+		Layer(props)
 	);
 };
 

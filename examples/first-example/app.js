@@ -21,8 +21,7 @@ var BoxMixin = Stalefish.extend({
 
 var ActiveBoxMixin = {
 	attr: {
-		width: 320,
-		x: 0
+		scale: 1.5
 	}
 };
 
