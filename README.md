@@ -2,8 +2,6 @@
 
 **A WORK-IN-PROGRESS tool for prototyping your apps, based on React.js**
 
-![Caution](http://www.oocities.org/websprinter1/under_construction_gifs/Flashing_sign_3.gif)
-
 ## Features
 
 + Declarative prototype layouts: define layouts, and React will diff between states.
