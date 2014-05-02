@@ -4,8 +4,7 @@
 	<meta charset="UTF-8">
 	<title>React Framer</title>
 	<style>
-	* { margin: 0; padding: 0; }
-	.layer { background: none no-repeat 0 0; background-size: 100% auto; position: absolute; top: 0; left: 0; -webkit-transform: translate3d(0,0,0); }
+	
 	
 	/* These would be built dynamically */
 	.ColorLogo { width: 197px; height: 67px; background-image: url('img/ColorLogo.png'); }
@@ -13,283 +12,21 @@
 	.Searchbox { width: calc(584px / 2); height: calc(116px / 2); background-image: url('img/Searchbox.png'); }
 	.TrafficCard { width: calc(608px / 2); height: calc(471px / 2); background-image: url('img/TrafficCard.png'); }
 	.WhiteLogo { width: calc(285px / 2); height: calc(93px / 2); background-image: url('img/WhiteLogo.png'); }
-
 	.Background { width: 100%; height: 100%; }
 
-	html, body, #app-container { height: 100%; }
-	.phone-mask { width: 320px; height: 480px; position: absolute; left: 0; top: 0; right: 0; bottom: 0; position: absolute; margin: auto; background: #ccc; }
-
-	.layer { -webkit-transition: all .5s ease; }
-
-	/*.ColorLogo { -webkit-transform: translate3d(61.5px, 100px, 0); }*/
-	/*.Searchbox { -webkit-transform: translate3d(14px, 200px, 0); }*/
-
+	
+	
 	</style>
 </head>
 <body>
 
 	<div id="app-container"></div>
 
-	<!-- <div class="phone-mask"> -->
-
-		<!-- <div class="ColorLogo layer"></div> -->
-		<!-- <div class="Context layer"></div> -->
-		<!-- <div class="Searchbox layer"></div> -->
-		<!-- <div class="TrafficCard layer"></div> -->
-		<!-- <div class="WhiteLogo layer"></div> -->
-
-	<!-- </div> -->
-
 	<script src="react.js"></script>
 	<script src="lodash.js"></script>
-	<script>
-
-	var TransitionGroup = React.addons.TransitionGroup;
-
-	var app;
-
-	var changeLayout = function(layout) {
-		app.setState({
-			layout: layout
-		});
-	};
-
-	var cycle = function() {
-		var args, curr;
-		if (_.isArray(arguments[0])) {
-			args = arguments[0];
-		} else {
-			args = Array.prototype.slice.call(arguments);
-		}
-		curr = -1;
-		return function() {
-			curr++;
-			if (curr >= args.length) {
-				curr = 0;
-			}
-			return args[curr];
-		};
-	};
-
-	/**
-	 * Default properties for all imported layers
-	 */
-	var layers = {
-		Background: {},
-		ColorLogo: {
-			attr: { x: 61.5, y: 100 },
-			closed: { attr: { opacity: 0 } },
-			opening: { attr: { opacity: 1 } },
-			closing: { attr: { opacity: 0 } }
-		},
-		Searchbox: {
-			attr: { x: 14, y: 200 }
-		}
-	};
-
-	/**
-	 * Property composites for combination of 
-	 */
-	var layouts = {
-		defaultView: {
-			Background: {
-				onClick: function() {
-					changeLayout('standardView')
-				}
-			}
-		},
-		standardView: {
-			Background: {
-				childLayers: {
-					ColorLogo: {
-						onClick: function(event) {
-							changeLayout('nowView');
-						}
-					},
-					Searchbox: {
-						onClick: function(event) {
-							changeLayout('searchView');
-						}
-					}
-				}
-			}
-		},
-		nowView: {
-			Background: {
-				onClick: function() {
-					changeLayout('standardView');
-				},
-				childLayers: {
-					ColorLogo: {
-						attr: { scale: 0.5, y: 50 }
-					},
-					Searchbox: {
-						attr: { y: 100 }
-					}
-				}
-			}
-		},
-		searchView: {
-			Background: {
-				onClick: function() {
-					changeLayout('standardView');
-				},
-				childLayers: {
-					Searchbox: {}
-				}
-			}
-		}
-	};
-
-
-	/**
-	 * 'React Framer'!
-	 */
-
-	var createLayer = function(layer, key) {
-		return (
-			Layer(_.extend({}, layer, {
-				name: key,
-				key: layer.key || key,
-				layers: this.props.layers,
-				layouts: this.props.layouts
-			}))
-		);
-	};
-
-	var LayerTransition = React.createClass({
-		render: function() {
-			return React.DOM.div({
-				className: 'layer-transition'
-			}, this.props.children);
-		}
-	});
-
-	var specialProps = ['scale', 'x', 'y'];
-
-	var Layer = React.createClass({
-		getInitialState: function() {
-			return {
-				attr: {},
-				curtain: 'closed'
-			};
-		},
-		defaultStyleProps: {
-			x: 0,
-			y: 0
-		},
-		getAttr: function(key) {
-			var attr = this.props[key] ? this.props[key].attr : null;
-			if(!attr) attr = this.props.layers[this.props.name][key] ? this.props.layers[this.props.name][key].attr : null;
-			return attr;
-		},
-		componentWillLeave: function(leave) {
-			this.setState({
-				curtain: 'closing'
-			}, function() {
-				setTimeout(function() {
-					leave();
-				}, 500);
-			});
-		},
-		componentWillEnter: function(enter) {
-			setTimeout(function() {
-				this.setState({
-					curtain: 'opening'
-				}, function() {
-					enter();
-				});
-			}.bind(this), 0);
-		},
-		render: function() {
-			var defaultStylePropsForLayer = this.props.layers[this.props.name].attr;
-			var stylePropsForLayout = this.props.attr;
-			var stylePropsForCurtain = this.getAttr(this.state.curtain);
-
-			var props = _.extend({}, this.defaultStyleProps, stylePropsForCurtain, defaultStylePropsForLayer, stylePropsForLayout);
-
-			var translate = 'translate3d(' + props.x + 'px, ' + props.y + 'px, 0px)';
-			var scale = 'scale(' + (typeof props.scale !== 'undefined' ? props.scale : 1) + ')';
-
-			var children = (this.props.childLayers && _.map(this.props.childLayers, function(child, key) {
-				return createLayer.call(this, child, key);
-			}.bind(this))) || [];
-
-			var style = {};
-			for(var key in props) {
-				if(specialProps.indexOf(key) === -1) {
-					style[key] = props[key];
-				}
-			}
-
-			return (
-				this.transferPropsTo(
-					React.DOM.div(
-						{
-							className: this.props.name + ' layer',
-							style: _.extend({
-								WebkitTransform: [translate, scale].join(' '),
-							}, style)
-						},
-						TransitionGroup(
-							{
-								component: React.DOM.div
-							},
-							children
-						)
-					)
-				)
-			);
-		}
-	});
-
-	var App = React.createClass({
-		getDefaultProps: function() {
-			return {
-				layouts: [],
-				layers: []
-			};
-		},
-		getInitialState: function() {
-			return {
-				layout: 'defaultView'
-			};
-		},
-		componentWillMount: function() {
-			// this.cycle = cycle('standardView', 'nowView', 'searchView');
-		},
-		render: function() {
-			return React.DOM.div({
-				className: 'phone-mask',
-				onClick: this._onClick
-			},
-				TransitionGroup(
-					{
-						component: React.DOM.div
-					},
-					_.map(this.props.layouts[this.state.layout], function(layer, key) {
-						return createLayer.call(this, layer, key);
-					}.bind(this))
-				)
-			);
-		},
-		_onClick: function(event) {
-			// this.setState({
-				// layout: this.cycle()
-			// });
-		}
-	});
-
-	/**
-	 * Instantiate
-	 */
-
-	app = React.renderComponent(App({
-		layers: layers,
-		layouts: layouts
-	}), document.getElementById('app-container'));
-
-	</script>
+	<script src="springTo.js"></script>
+	<script src="framer.js"></script>
+	<script src="main.js"></script>
 	
 </body>
 </html>

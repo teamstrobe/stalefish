@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>A simple Stalefish example</title>
+	<style>
+	/* Useful base styles for use with Stalefish */
+	* { margin: 0; padding: 0; }
+	.layer { background: none no-repeat 0 0; background-size: 100% auto; position: absolute; top: 0; left: 0; -webkit-transform: translate3d(0,0,0); }
+	html, body, #app-container { height: 100%; }
+
+	/* iPhone-like container */
+	.inner-container { width: 320px; height: 500px; position: absolute; left: 0; top: 0; right: 0; bottom: 0; position: absolute; margin: auto; background: #ccc; }
+
+	/* Transition all the things! (You can be more specific by targeting a particular layer or property) */
+	.layer { -webkit-transition: all 0.5s ease; }
+	</style>
+</head>
+<body>
+
+	<div id="app-container">
+		<!-- This is needed to inject the layers -->
+	</div>
+
+	<script src="build.js"></script>
+	
+</body>
+</html>
